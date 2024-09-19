@@ -1,10 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { CountriesModule } from './countries/countries.module';
+import { PrismaService } from './prisma.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PrismaModule } from './prisma.module';
+import { SessionService } from './session.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, cache: true }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (config) => ({
+        secret: process.env.JWT_SECRET,
+      }),
+      global: true,
+      inject: [ConfigService],
+    }),
+    AuthModule,
+    PrismaModule,
+    CountriesModule],
+  controllers: [],
+  providers: [PrismaService,SessionService ],
+  exports: [PrismaService],
 })
+
 export class AppModule {}

@@ -1,0 +1,792 @@
+
+generator client {
+  provider = "prisma-client-js"
+  //previewFeatures = ["multiSchema"] -- uncomment this to enable multi-schema support
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = "public"
+  //schemas  = ["auth", "public"] -- uncomment this to enable multi-schema support
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activities {
+  activity_id     Int          @id @default(autoincrement())
+  name            String       @db.VarChar(80)
+  description     String?
+  club_type_id    Int
+  club_id         Int
+  active          Boolean      @default(false)
+  lat             Float
+  long            Float
+  activity_time   String       @default("00:00") @db.VarChar(10)
+  activity_place  String       @default("Lugar")
+  image           String
+  platform        Int          @default(0)
+  activity_type   Int          @default(0)
+  link_meet       String?
+  additional_data String?
+  attendees       Json?        @db.Json
+  classes         Json?        @db.Json
+  created_by      String       @db.Uuid
+  created_at      DateTime?    @default(now()) @db.Timestamp(6)
+  modified_at     DateTime?    @default(now()) @db.Timestamp(6)
+  clubs           clubs        @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_types      club_types   @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users           public_users @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model assignments_folders {
+  assignment_folder_id Int           @id @default(autoincrement())
+  folder_id            Int?
+  coordinator_id       Int?
+  assignment_date      DateTime?     @default(now()) @db.Timestamp(6)
+  created_at           DateTime?     @default(now()) @db.Timestamp(6)
+  modified_at          DateTime?     @default(now()) @db.Timestamp(6)
+  coordinators         coordinators? @relation(fields: [coordinator_id], references: [coordinator_id], onDelete: NoAction, onUpdate: NoAction)
+  folders              folders?      @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model attending_clubs_camporees {
+  attending_clubs_id Int             @id @default(autoincrement())
+  camporee_id        Int
+  camporee_type      String          @db.VarChar(50)
+  club_id            Int
+  local_field_id     Int?
+  created_at         DateTime        @default(now()) @db.Timestamp(6)
+  modified_at        DateTime        @default(now()) @db.Timestamp(6)
+  local_camporees    local_camporees @relation(fields: [camporee_id], references: [local_camporee_id], onDelete: Cascade, onUpdate: NoAction)
+  clubs              clubs           @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields       local_fields?   @relation(fields: [local_field_id], references: [local_field_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model attending_members_camporees {
+  attending_members_id Int             @id @default(autoincrement())
+  camporee_id          Int
+  camporee_type        String          @db.VarChar(50)
+  user_id              String          @db.Uuid
+  club_name            String?         @db.VarChar(255)
+  local_field_id       Int?
+  created_at           DateTime        @default(now()) @db.Timestamp(6)
+  modified_at          DateTime        @default(now()) @db.Timestamp(6)
+  local_camporees      local_camporees @relation(fields: [camporee_id], references: [local_camporee_id], onDelete: Cascade, onUpdate: NoAction)
+  local_fields         local_fields?   @relation(fields: [local_field_id], references: [local_field_id], onDelete: Cascade, onUpdate: NoAction)
+  users                public_users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_module_progress {
+  module_progress_id Int          @id @default(autoincrement())
+  user_id            String       @db.Uuid
+  class_id           Int
+  module_id          Int
+  score              Float
+  created_at         DateTime     @default(now()) @db.Timestamp(6)
+  modified_at        DateTime     @default(now()) @db.Timestamp(6)
+  classes            classes      @relation(fields: [class_id], references: [class_id], onDelete: NoAction, onUpdate: NoAction)
+  users              public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, class_id, module_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_modules {
+  module_id      Int              @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  description    String?
+  class_id       Int
+  active         Boolean
+  created_at     DateTime         @default(now()) @db.Timestamp(6)
+  modified_at    DateTime         @default(now()) @db.Timestamp(6)
+  classes        classes          @relation(fields: [class_id], references: [class_id], onDelete: NoAction, onUpdate: NoAction)
+  class_sections class_sections[]
+
+  @@unique([name, class_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_section_progress {
+  section_progress_id Int          @id @default(autoincrement())
+  user_id             String       @db.Uuid
+  class_id            Int
+  module_id           Int
+  section_id          Int
+  score               Float
+  evidence_1_path     String?
+  evidence_2_path     String?
+  evidence_3_path     String?
+  pdf_file_path       String?
+  created_at          DateTime     @default(now()) @db.Timestamp(6)
+  modified_at         DateTime     @default(now()) @db.Timestamp(6)
+  classes             classes      @relation(fields: [class_id], references: [class_id], onDelete: NoAction, onUpdate: NoAction)
+  users               public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, class_id, module_id, section_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_sections {
+  section_id    Int           @id @default(autoincrement())
+  name          String        @db.VarChar(255)
+  description   String?
+  module_id     Int
+  active        Boolean
+  created_at    DateTime      @default(now()) @db.Timestamp(6)
+  modified_at   DateTime      @default(now()) @db.Timestamp(6)
+  class_modules class_modules @relation(fields: [module_id], references: [module_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([name, module_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model classes {
+  class_id               Int                      @id @default(autoincrement())
+  name                   String                   @unique @db.VarChar(255)
+  description            String?
+  active                 Boolean
+  created_at             DateTime                 @default(now()) @db.Timestamp(6)
+  modified_at            DateTime                 @default(now()) @db.Timestamp(6)
+  club_type_id           Int
+  ecclesiastical_year_id Int
+  class_module_progress  class_module_progress[]
+  class_modules          class_modules[]
+  class_section_progress class_section_progress[]
+  club_types             club_types               @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  ecclesiastical_year    ecclesiastical_year      @relation(fields: [ecclesiastical_year_id], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments            enrollments[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model club_ideals {
+  club_ideal_id Int        @id @default(autoincrement())
+  name          String     @db.VarChar(50)
+  ideal_order   Int
+  club_type_id  Int
+  active        Boolean    @default(false)
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  modified_at   DateTime?  @default(now()) @db.Timestamp(6)
+  ideal         String?
+  club_types    club_types @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model club_inventory {
+  club_inventory_id     Int       @id @default(autoincrement())
+  name                  String    @db.VarChar(100)
+  description           String?
+  inventory_category_id Int?
+  amount                Int?      @default(0)
+  club_id               Int
+  active                Boolean   @default(false)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  modified_at           DateTime? @default(now()) @db.Timestamp(6)
+  clubs                 clubs     @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model club_types {
+  club_type_id Int           @id @default(autoincrement())
+  name         String        @unique @db.VarChar(50)
+  active       Boolean       @default(false)
+  created_at   DateTime?     @default(now()) @db.Timestamp(6)
+  modified_at  DateTime?     @default(now()) @db.Timestamp(6)
+  activities   activities[]
+  classes      classes[]
+  club_ideals  club_ideals[]
+  finances     finances[]
+  folders      folders[]
+  units        units[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model clubs {
+  club_id                   Int                         @id @default(autoincrement())
+  name                      String                      @db.VarChar(50)
+  description               String?
+  active                    Boolean                     @default(false)
+  local_field_id            Int
+  adventurers               Boolean                     @default(false)
+  adventurers_director      Int?
+  pathfinders               Boolean                     @default(false)
+  pathfinders_director      Int?
+  master_guild              Boolean                     @default(false)
+  master_guild_director     Int?
+  souls_target              Int                         @default(1)
+  fee                       Int                         @default(1)
+  meeting_day               String[]
+  address                   String?
+  district_id               Int
+  church_id                 Int
+  coordinates               Unsupported("point")?
+  meeting_time              String[]
+  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
+  modified_at               DateTime?                   @default(now()) @db.Timestamp(6)
+  activities                activities[]
+  attending_clubs_camporees attending_clubs_camporees[]
+  club_inventory            club_inventory[]
+  churches                  churches                    @relation(fields: [church_id], references: [church_id], onDelete: NoAction, onUpdate: NoAction)
+  districts                 districts                   @relation(fields: [district_id], references: [district_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields              local_fields                @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+  finances                  finances[]
+  folders_modules_records   folders_modules_records[]
+  folders_section_records   folders_section_records[]
+  units                     units[]
+  users                     public_users[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model coordinators {
+  coordinator_id      Int                   @id @default(autoincrement())
+  user_id             String?               @unique @db.Uuid
+  active              Boolean               @default(false)
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  modified_at         DateTime?             @default(now()) @db.Timestamp(6)
+  assignments_folders assignments_folders[]
+  users               public_users?         @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model districts {
+  district_id    Int          @id @default(autoincrement())
+  name           String       @db.VarChar(50)
+  active         Boolean      @default(false)
+  local_field_id Int
+  created_at     DateTime?    @default(now()) @db.Timestamp(6)
+  modified_at    DateTime?    @default(now()) @db.Timestamp(6)
+  churches       churches[]
+  clubs          clubs[]
+  local_fields   local_fields @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ecclesiastical_year {
+  year_id                                                                  Int               @id @default(autoincrement())
+  start_date                                                               DateTime          @db.Date
+  end_date                                                                 DateTime          @db.Date
+  active                                                                   Boolean           @default(false)
+  created_at                                                               DateTime?         @default(now()) @db.Timestamp(6)
+  modified_at                                                              DateTime?         @default(now()) @db.Timestamp(6)
+  classes                                                                  classes[]
+  folders                                                                  folders[]
+  local_camporees_local_camporees_ecclesiastical_yearToecclesiastical_year local_camporees[] @relation("local_camporees_ecclesiastical_yearToecclesiastical_year")
+  union_camporees_union_camporees_ecclesiastical_yearToecclesiastical_year union_camporees[] @relation("union_camporees_ecclesiastical_yearToecclesiastical_year")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model enrollments {
+  enrollment_id      Int          @id @default(autoincrement())
+  user_id            String       @db.Uuid
+  class_id           Int
+  enrollment_date    DateTime     @default(now()) @db.Timestamp(6)
+  created_at         DateTime     @default(now()) @db.Timestamp(6)
+  modified_at        DateTime     @default(now()) @db.Timestamp(6)
+  investiture_status Boolean?
+  advanced_status    Boolean?
+  classes            classes      @relation(fields: [class_id], references: [class_id], onDelete: NoAction, onUpdate: NoAction)
+  users              public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, class_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model error_logs {
+  log_id             Int       @id @default(autoincrement())
+  procedure_name     String    @db.VarChar(100)
+  error_message      String
+  additional_details String
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model finances {
+  finance_id          Int                 @id @default(autoincrement())
+  year                Int
+  month               Int
+  amount              Int
+  description         String?
+  club_type_id        Int
+  club_id             Int
+  finance_category_id Int
+  finance_date        DateTime            @db.Date
+  active              Boolean             @default(false)
+  created_by          String              @db.Uuid
+  created_at          DateTime?           @default(now()) @db.Timestamp(6)
+  modified_at         DateTime?           @default(now()) @db.Timestamp(6)
+  clubs               clubs               @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_types          club_types          @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users               public_users        @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  finances_categories finances_categories @relation(fields: [finance_category_id], references: [finance_category_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model finances_categories {
+  finance_category_id Int        @id @default(autoincrement())
+  name                String     @db.VarChar(100)
+  description         String?
+  icon                Int?       @default(0)
+  type                Int
+  active              Boolean    @default(false)
+  created_at          DateTime?  @default(now()) @db.Timestamp(6)
+  modified_at         DateTime?  @default(now()) @db.Timestamp(6)
+  finances            finances[]
+
+  @@unique([name, type], map: "unique_name_type")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model folders {
+  folder_id               Int                       @id @default(autoincrement())
+  name                    String                    @unique @db.VarChar(255)
+  description             String?
+  active                  Boolean                   @default(false)
+  created_at              DateTime?                 @default(now()) @db.Timestamp(6)
+  modified_at             DateTime?                 @default(now()) @db.Timestamp(6)
+  club_type               Int?
+  ecclesiastical_year_id  Int?
+  status                  String?                   @default("incompleto") @db.VarChar(50)
+  total_points            Int?                      @default(0)
+  max_points              Int?                      @default(0)
+  minimum_points          Int?                      @default(0)
+  assignments_folders     assignments_folders[]
+  club_types              club_types?               @relation(fields: [club_type], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  ecclesiastical_year     ecclesiastical_year?      @relation(fields: [ecclesiastical_year_id], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules         folders_modules[]
+  folders_modules_records folders_modules_records[]
+  folders_section_records folders_section_records[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model folders_modules {
+  folder_module_id        Int                       @id @default(autoincrement())
+  name                    String                    @db.VarChar(255)
+  description             String?
+  folder_id               Int?
+  total_points            Int?                      @default(0)
+  max_points              Int?                      @default(0)
+  minimum_points          Int?                      @default(0)
+  created_at              DateTime?                 @default(now()) @db.Timestamp(6)
+  modified_at             DateTime?                 @default(now()) @db.Timestamp(6)
+  folders                 folders?                  @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules_records folders_modules_records[]
+  folders_section_records folders_section_records[]
+  folders_sections        folders_sections[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model folders_modules_records {
+  folder_module_record_id Int              @id @default(autoincrement())
+  club_id                 Int?
+  folder_id               Int?
+  module_id               Int?
+  points                  Int?             @default(0)
+  created_at              DateTime?        @default(now()) @db.Timestamp(6)
+  modified_at             DateTime?        @default(now()) @db.Timestamp(6)
+  clubs                   clubs?           @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  folders                 folders?         @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules         folders_modules? @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([club_id, folder_id, module_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model folders_section_records {
+  folder_section_record_id Int               @id @default(autoincrement())
+  club_id                  Int?
+  folder_id                Int?
+  module_id                Int?
+  section_id               Int?
+  points                   Int?              @default(0)
+  evidence_1               String?           @db.VarChar(255)
+  evidence_2               String?           @db.VarChar(255)
+  evidence_3               String?           @db.VarChar(255)
+  evidence_4               String?           @db.VarChar(255)
+  evidence_5               String?           @db.VarChar(255)
+  pdf_file                 String?           @db.VarChar(255)
+  created_at               DateTime?         @default(now()) @db.Timestamp(6)
+  modified_at              DateTime?         @default(now()) @db.Timestamp(6)
+  clubs                    clubs?            @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  folders                  folders?          @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules          folders_modules?  @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_sections         folders_sections? @relation(fields: [section_id], references: [folder_section_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([club_id, folder_id, module_id, section_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model folders_sections {
+  folder_section_id       Int                       @id @default(autoincrement())
+  name                    String                    @db.VarChar(255)
+  description             String?
+  module_id               Int?
+  created_at              DateTime?                 @default(now()) @db.Timestamp(6)
+  modified_at             DateTime?                 @default(now()) @db.Timestamp(6)
+  total_points            Int?                      @default(0)
+  max_points              Int?                      @default(0)
+  minimum_points          Int?                      @default(0)
+  folders_section_records folders_section_records[]
+  folders_modules         folders_modules?          @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model honors {
+  honor_id           Int               @id @default(autoincrement())
+  name               String            @unique @db.VarChar(100)
+  description        String?
+  honor_image        String?
+  honors_category_id Int
+  master_honors_id   Int
+  material_url       String?
+  active             Boolean           @default(false)
+  created_at         DateTime?         @default(now()) @db.Timestamp(6)
+  modified_at        DateTime?         @default(now()) @db.Timestamp(6)
+  honors_categories  honors_categories @relation(fields: [honors_category_id], references: [honor_category_id], onDelete: NoAction, onUpdate: NoAction)
+  master_honors      master_honors     @relation(fields: [master_honors_id], references: [master_honor_id], onDelete: NoAction, onUpdate: NoAction)
+  user_honors        user_honors[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model honors_categories {
+  honor_category_id Int       @id @default(autoincrement())
+  name              String    @unique @db.VarChar(100)
+  description       String?
+  icon              Int
+  active            Boolean   @default(false)
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  modified_at       DateTime? @default(now()) @db.Timestamp(6)
+  honors            honors[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model inventory_categories {
+  inventory_categoty_id Int       @id @default(autoincrement())
+  name                  String    @db.VarChar(100)
+  icon                  Int?      @default(0)
+  active                Boolean   @default(false)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  modified_at           DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model local_camporees {
+  local_camporee_id                                                            Int                           @id @default(autoincrement())
+  name                                                                         String                        @db.VarChar(255)
+  description                                                                  String?
+  start_date                                                                   DateTime                      @db.Date
+  end_date                                                                     DateTime                      @db.Date
+  local_field_id                                                               Int
+  includes_adventurers                                                         Boolean?                      @default(false)
+  includes_pathfinders                                                         Boolean?                      @default(false)
+  includes_master_guides                                                       Boolean?                      @default(false)
+  local_camporee_place                                                         String                        @default("Lugar")
+  registration_cost                                                            Decimal?                      @db.Decimal(10, 2)
+  ecclesiastical_year                                                          Int
+  created_at                                                                   DateTime                      @default(now()) @db.Timestamp(6)
+  modified_at                                                                  DateTime                      @default(now()) @db.Timestamp(6)
+  attending_clubs_camporees                                                    attending_clubs_camporees[]
+  attending_members_camporees                                                  attending_members_camporees[]
+  ecclesiastical_year_local_camporees_ecclesiastical_yearToecclesiastical_year ecclesiastical_year           @relation("local_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields                                                                 local_fields                  @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model master_honors {
+  master_honor_id Int       @id @default(autoincrement())
+  name            String    @unique @db.VarChar(100)
+  master_image    String?
+  active          Boolean   @default(false)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  modified_at     DateTime? @default(now()) @db.Timestamp(6)
+  honors          honors[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model permissions {
+  permission_id    String             @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  permission_name  String             @unique @db.VarChar(255)
+  description      String?
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  modified_at      DateTime?          @default(now()) @db.Timestamp(6)
+  role_permissions role_permissions[]
+  user_permissions user_permissions[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model role_permissions {
+  role_permission_id String      @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  role_id            String      @db.Uuid
+  permission_id      String      @db.Uuid
+  created_at         DateTime?   @default(now()) @db.Timestamp(6)
+  modified_at        DateTime?   @default(now()) @db.Timestamp(6)
+  permissions        permissions @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_permission")
+  roles              roles       @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role")
+
+  @@unique([role_id, permission_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model roles {
+  role_id          String             @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  role_name        String             @unique @db.VarChar(255)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  modified_at      DateTime?          @default(now()) @db.Timestamp(6)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model union_camporee_local_fields {
+  union_camporee_lf_id Int
+  local_field_id       Int
+  created_at           DateTime        @default(now()) @db.Timestamp(6)
+  modified_at          DateTime        @default(now()) @db.Timestamp(6)
+  local_fields         local_fields    @relation(fields: [local_field_id], references: [local_field_id], onDelete: Cascade, onUpdate: NoAction)
+  union_camporees      union_camporees @relation(fields: [union_camporee_lf_id], references: [union_camporee_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([union_camporee_lf_id, local_field_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model union_camporees {
+  union_camporee_id                                                            Int                           @id @default(autoincrement())
+  name                                                                         String                        @db.VarChar(255)
+  description                                                                  String?
+  start_date                                                                   DateTime                      @db.Date
+  end_date                                                                     DateTime                      @db.Date
+  union_id                                                                     Int
+  includes_adventurers                                                         Boolean?                      @default(false)
+  includes_pathfinders                                                         Boolean?                      @default(false)
+  includes_master_guides                                                       Boolean?                      @default(false)
+  union_camporee_place                                                         String                        @default("Lugar")
+  registration_cost                                                            Decimal?                      @db.Decimal(10, 2)
+  ecclesiastical_year                                                          Int
+  created_at                                                                   DateTime                      @default(now()) @db.Timestamp(6)
+  modified_at                                                                  DateTime                      @default(now()) @db.Timestamp(6)
+  union_camporee_local_fields                                                  union_camporee_local_fields[]
+  ecclesiastical_year_union_camporees_ecclesiastical_yearToecclesiastical_year ecclesiastical_year           @relation("union_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  unions                                                                       unions                        @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model unit_members {
+  unit_member_id Int          @id @default(autoincrement())
+  unit_id        Int
+  user_id        String       @unique @db.Uuid
+  created_at     DateTime     @default(now()) @db.Timestamp(6)
+  modified_at    DateTime     @default(now()) @db.Timestamp(6)
+  units          units        @relation(fields: [unit_id], references: [unit_id], onDelete: NoAction, onUpdate: NoAction)
+  users          public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model units {
+  unit_id                                  Int            @id @default(autoincrement())
+  name                                     String         @db.VarChar(255)
+  captain_id                               String         @db.Uuid
+  secretary_id                             String         @db.Uuid
+  advisor_id                               String         @db.Uuid
+  substitute_advisor_id                    String?        @db.Uuid
+  club_id                                  Int
+  club_type_id                             Int
+  active                                   Boolean
+  created_at                               DateTime       @default(now()) @db.Timestamp(6)
+  modified_at                              DateTime       @default(now()) @db.Timestamp(6)
+  unit_members                             unit_members[]
+  users_units_advisor_idTousers            public_users   @relation("units_advisor_idTousers", fields: [advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_captain_idTousers            public_users   @relation("units_captain_idTousers", fields: [captain_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  clubs                                    clubs          @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_types                               club_types     @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_secretary_idTousers          public_users   @relation("units_secretary_idTousers", fields: [secretary_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_substitute_advisor_idTousers public_users?  @relation("units_substitute_advisor_idTousers", fields: [substitute_advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([name, club_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_honors {
+  user_honor_id Int          @id @default(autoincrement())
+  user_id       String       @db.Uuid
+  honor_id      Int
+  created_at    DateTime?    @default(now()) @db.Timestamp(6)
+  modified_at   DateTime?    @default(now()) @db.Timestamp(6)
+  honors        honors       @relation(fields: [honor_id], references: [honor_id], onDelete: NoAction, onUpdate: NoAction)
+  users         public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_permissions {
+  user_permission_id String       @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  user_id            String       @db.Uuid
+  permission_id      String       @db.Uuid
+  created_at         DateTime?    @default(now()) @db.Timestamp(6)
+  modified_at        DateTime?    @default(now()) @db.Timestamp(6)
+  permissions        permissions  @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_permission")
+  users              public_users @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+
+  @@unique([user_id, permission_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_roles {
+  user_role_id String       @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  user_id      String       @db.Uuid
+  role_id      String       @db.Uuid
+  created_at   DateTime?    @default(now()) @db.Timestamp(6)
+  modified_at  DateTime?    @default(now()) @db.Timestamp(6)
+  roles        roles        @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role")
+  users        public_users @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+
+  @@unique([user_id, role_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model public_users {
+  id                                       String                        @db.Uuid
+  user_id                                  String                        @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  name                                     String                        @db.VarChar(50)
+  paternal_last_name                       String                        @db.VarChar(50)
+  mother_last_name                         String                        @db.VarChar(50)
+  active                                   Boolean                       @default(false)
+  email                                    String                        @unique @db.VarChar(100)
+  password                                 String                        @db.VarChar(200)
+  gender                                   Int?                          @default(1)
+  birthday                                 DateTime                      @db.Date
+  tutor_name                               String                        @db.VarChar(150)
+  tutor_phone                              String                        @db.VarChar
+  blood                                    String                        @db.VarChar(5)
+  baptism                                  Boolean                       @default(false)
+  baptism_date                             DateTime                      @db.Date
+  apple_connected                          Boolean                       @default(false)
+  fb_connected                             Boolean                       @default(false)
+  google_connected                         Boolean                       @default(false)
+  user_image                               String
+  country_id                               Int
+  union_id                                 Int
+  club_id                                  Int
+  access_app                               Boolean?                      @default(true)
+  access_panel                             Boolean?                      @default(false)
+  created_at                               DateTime?                     @default(now()) @db.Timestamp(6)
+  modified_at                              DateTime?                     @default(now()) @db.Timestamp(6)
+  activities                               activities[]
+  attending_members_camporees              attending_members_camporees[]
+  class_module_progress                    class_module_progress[]
+  class_section_progress                   class_section_progress[]
+  coordinators                             coordinators?
+  enrollments                              enrollments[]
+  finances                                 finances[]
+  unit_members                             unit_members?
+  units_units_advisor_idTousers            units[]                       @relation("units_advisor_idTousers")
+  units_units_captain_idTousers            units[]                       @relation("units_captain_idTousers")
+  units_units_secretary_idTousers          units[]                       @relation("units_secretary_idTousers")
+  units_units_substitute_advisor_idTousers units[]                       @relation("units_substitute_advisor_idTousers")
+  user_honors                              user_honors[]
+  user_permissions                         user_permissions[]
+  user_roles                               user_roles[]
+  clubs                                    clubs                         @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  countries                                countries                     @relation(fields: [country_id], references: [country_id], onDelete: NoAction, onUpdate: NoAction)
+  users                                    auth_users                    @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unions                                   unions                        @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
+  weekly_records                           weekly_records[]
+
+  @@map("users")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model weekly_records {
+  record_id   Int          @id @default(autoincrement())
+  user_id     String       @db.Uuid
+  week        Int
+  attendance  Int
+  punctuality Int
+  points      Int
+  created_at  DateTime     @default(now()) @db.Timestamp(6)
+  modified_at DateTime     @default(now()) @db.Timestamp(6)
+  users       public_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, week])
+}
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+  phone
+
+  @@schema("auth")
+}
+
+enum one_time_token_type {
+  confirmation_token
+  reauthentication_token
+  recovery_token
+  email_change_token_new
+  email_change_token_current
+  phone_change_token
+
+  @@schema("auth")
+}
+
+/// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+enum blood_type {
+  Ap  @map("A+")
+  An  @map("A-")
+  Bp  @map("B+")
+  Bn  @map("B-")
+  ABp @map("AB+")
+  ABn @map("AB-")
+  Op  @map("O+")
+  On  @map("O-")
+}
+
+enum gender {
+  Masculino
+  Femenino
+}
+
+enum rol_type {
+  Administrativo
+  Operativo
+  Super
+}
