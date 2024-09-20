@@ -8,7 +8,7 @@ import {
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
-@Controller('auth-service')
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
