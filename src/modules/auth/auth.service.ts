@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, ConflictException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '@prisma/client';
 
@@ -57,8 +57,9 @@ export class AuthService {
       email,
       password,
     });
+
     if (error) throw error;
-    return this.generateToken(data);
+    return this.generateToken(data.user);
   }
 
   async signOut(token: string) {

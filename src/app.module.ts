@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { CountriesModule } from './countries/countries.module';
+import { CountriesModule } from './modules/countries/countries.module';
 import { PrismaService } from './prisma.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from './prisma.module';
 import { SessionService } from './session.service';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,7 +22,10 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     CountriesModule],
   controllers: [],
-  providers: [PrismaService,SessionService ],
+  providers: [
+    PrismaService,
+    SessionService,
+  ],
   exports: [PrismaService],
 })
 

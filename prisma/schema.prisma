@@ -8,29 +8,35 @@ datasource db {
 }
 
 model activities {
-  activity_id     Int        @id @default(autoincrement())
-  name            String     @db.VarChar(80)
+  activity_id     Int               @id @default(autoincrement())
+  name            String            @db.VarChar(80)
   description     String?
   club_type_id    Int
   club_id         Int
-  active          Boolean    @default(false)
+  active          Boolean           @default(false)
   lat             Float
   long            Float
-  activity_time   String     @default("00:00") @db.VarChar(10)
-  activity_place  String     @default("Lugar")
+  activity_time   String            @default("09:00") @db.VarChar(10)
+  activity_place  String            @default("place")
   image           String
-  platform        Int        @default(0)
-  activity_type   Int        @default(0)
+  platform        Int               @default(0)
+  activity_type   Int               @default(0)
   link_meet       String?
   additional_data String?
-  attendees       Json?      @db.Json
-  classes         Json?      @db.Json
-  created_by      String     @db.Uuid
-  created_at      DateTime?  @default(now()) @db.Timestamp(6)
-  modified_at     DateTime?  @default(now()) @db.Timestamp(6)
-  clubs           clubs      @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  club_types      club_types @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
-  users           users      @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  attendees       Json?             @db.Json
+  classes         Json?             @db.Json
+  created_by      String            @db.Uuid
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  modified_at     DateTime?         @default(now()) @db.Timestamp(6)
+  club_adv_id     Int
+  club_mg_id      Int
+  club_pathf_id   Int
+  club_adv_i      club_adventurers  @relation(fields: [club_adv_id], references: [club_adv_id], onDelete: NoAction, onUpdate: NoAction)
+  clubs           clubs             @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_mg         club_master_guild @relation(fields: [club_mg_id], references: [club_mg_id], onDelete: NoAction, onUpdate: NoAction)
+  club_pathf      club_pathfinders  @relation(fields: [club_pathf_id], references: [club_pathf_id], onDelete: NoAction, onUpdate: NoAction)
+  club_types      club_types        @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users           users             @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model assignments_folders {
@@ -45,16 +51,21 @@ model assignments_folders {
 }
 
 model attending_clubs_camporees {
-  attending_clubs_id Int             @id @default(autoincrement())
+  attending_clubs_id Int                @id @default(autoincrement())
   camporee_id        Int
-  camporee_type      String          @db.VarChar(50)
-  club_id            Int
+  camporee_type      String             @db.VarChar(50)
+  club_id            Int?
   local_field_id     Int?
-  created_at         DateTime        @default(now()) @db.Timestamp(6)
-  modified_at        DateTime        @default(now()) @db.Timestamp(6)
-  local_camporees    local_camporees @relation(fields: [camporee_id], references: [local_camporee_id], onDelete: Cascade, onUpdate: NoAction)
-  clubs              clubs           @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  local_fields       local_fields?   @relation(fields: [local_field_id], references: [local_field_id], onDelete: Cascade, onUpdate: NoAction)
+  created_at         DateTime           @default(now()) @db.Timestamp(6)
+  modified_at        DateTime           @default(now()) @db.Timestamp(6)
+  club_adv_id        Int?
+  club_mg_id         Int?
+  club_pathf_id      Int?
+  local_camporees    local_camporees    @relation(fields: [camporee_id], references: [local_camporee_id], onDelete: Cascade, onUpdate: NoAction)
+  club_adv           club_adventurers?  @relation(fields: [club_adv_id], references: [club_adv_id], onDelete: NoAction, onUpdate: NoAction)
+  club_mg            club_master_guild? @relation(fields: [club_mg_id], references: [club_mg_id], onDelete: NoAction, onUpdate: NoAction)
+  club_pathf         club_pathfinders?  @relation(fields: [club_pathf_id], references: [club_pathf_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields       local_fields?      @relation(fields: [local_field_id], references: [local_field_id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model attending_members_camporees {
@@ -172,65 +183,167 @@ model club_ideals {
 }
 
 model club_inventory {
-  club_inventory_id     Int       @id @default(autoincrement())
-  name                  String    @db.VarChar(100)
-  description           String?
-  inventory_category_id Int?
-  amount                Int?      @default(0)
-  club_id               Int
-  active                Boolean   @default(false)
-  created_at            DateTime? @default(now()) @db.Timestamp(6)
-  modified_at           DateTime? @default(now()) @db.Timestamp(6)
-  clubs                 clubs     @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_inventory_id             Int                @id @default(autoincrement())
+  name                          String             @db.VarChar(100)
+  description                   String?
+  inventory_category_id         Int?
+  amount                        Int?               @default(0)
+  club_id                       Int
+  active                        Boolean            @default(false)
+  created_at                    DateTime?          @default(now()) @db.Timestamp(6)
+  modified_at                   DateTime?          @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id   Int?
+  club_master_guildClub_mg_id   Int?
+  club_pathfindersClub_pathf_id Int?
+  club_adventurers              club_adventurers?  @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
+  club_master_guild             club_master_guild? @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders              club_pathfinders?  @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
 }
 
 model club_types {
-  club_type_id Int           @id @default(autoincrement())
-  name         String        @unique @db.VarChar(50)
-  active       Boolean       @default(false)
-  created_at   DateTime?     @default(now()) @db.Timestamp(6)
-  modified_at  DateTime?     @default(now()) @db.Timestamp(6)
-  activities   activities[]
-  classes      classes[]
-  club_ideals  club_ideals[]
-  finances     finances[]
-  folders      folders[]
-  units        units[]
+  club_type_id      Int                 @id @default(autoincrement())
+  name              String              @unique @db.VarChar(50)
+  active            Boolean             @default(false)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  modified_at       DateTime?           @default(now()) @db.Timestamp(6)
+  activities        activities[]
+  classes           classes[]
+  club_adventurers  club_adventurers[]
+  club_ideals       club_ideals[]
+  club_master_guild club_master_guild[]
+  club_pathfinders  club_pathfinders[]
+  finances          finances[]
+  folders           folders[]
+  units             units[]
 }
 
 model clubs {
-  club_id                   Int                         @id @default(autoincrement())
-  name                      String                      @db.VarChar(50)
-  description               String?
+  club_id                 Int                       @id @default(autoincrement())
+  name                    String                    @db.VarChar(50)
+  description             String?
+  active                  Boolean                   @default(false)
+  local_field_id          Int
+  address                 String?
+  district_id             Int
+  church_id               Int
+  coordinates             Json                      @db.Json
+  created_at              DateTime?                 @default(now()) @db.Timestamp(6)
+  modified_at             DateTime?                 @default(now()) @db.Timestamp(6)
+  club_adv_id             Int?
+  club_mg_id              Int?
+  club_pathf_id           Int?
+  activities              activities[]
+  churches                churches                  @relation(fields: [church_id], references: [church_id], onDelete: NoAction, onUpdate: NoAction)
+  club_adventurers        club_adventurers?         @relation(fields: [club_adv_id], references: [club_adv_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild       club_master_guild?        @relation(fields: [club_mg_id], references: [club_mg_id], onDelete: NoAction, onUpdate: NoAction)
+  club_pathfinders        club_pathfinders?         @relation(fields: [club_pathf_id], references: [club_pathf_id], onDelete: NoAction, onUpdate: NoAction)
+  districts               districts                 @relation(fields: [district_id], references: [district_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields            local_fields              @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+  finances                finances[]
+  folders_modules_records folders_modules_records[]
+  folders_section_records folders_section_records[]
+  units                   units[]
+  users                   users[]
+}
+
+model club_adventurers {
+  club_adv_id               Int                         @id @default(autoincrement())
   active                    Boolean                     @default(false)
-  local_field_id            Int
-  adventurers               Boolean                     @default(false)
-  adventurers_director      Int?
-  pathfinders               Boolean                     @default(false)
-  pathfinders_director      Int?
-  master_guild              Boolean                     @default(false)
-  master_guild_director     Int?
   souls_target              Int                         @default(1)
   fee                       Int                         @default(1)
   meeting_day               String[]
-  address                   String?
-  district_id               Int
-  church_id                 Int
-  coordinates               Json                        @db.Json
   meeting_time              String[]
+  club_type_id              Int
   created_at                DateTime?                   @default(now()) @db.Timestamp(6)
   modified_at               DateTime?                   @default(now()) @db.Timestamp(6)
+  club_typesClub_type_id    Int
   activities                activities[]
   attending_clubs_camporees attending_clubs_camporees[]
+  club_types                club_types                  @relation(fields: [club_typesClub_type_id], references: [club_type_id])
   club_inventory            club_inventory[]
-  churches                  churches                    @relation(fields: [church_id], references: [church_id], onDelete: NoAction, onUpdate: NoAction)
-  districts                 districts                   @relation(fields: [district_id], references: [district_id], onDelete: NoAction, onUpdate: NoAction)
-  local_fields              local_fields                @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+  club_role_assignments     club_role_assignments[]
+  clubs                     clubs[]
   finances                  finances[]
   folders_modules_records   folders_modules_records[]
   folders_section_records   folders_section_records[]
   units                     units[]
   users                     users[]
+}
+
+model club_pathfinders {
+  club_pathf_id             Int                         @id @default(autoincrement())
+  active                    Boolean                     @default(false)
+  souls_target              Int                         @default(1)
+  fee                       Int                         @default(1)
+  meeting_day               String[]
+  meeting_time              String[]
+  club_type_id              Int
+  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
+  modified_at               DateTime?                   @default(now()) @db.Timestamp(6)
+  club_typesClub_type_id    Int
+  activities                activities[]
+  attending_clubs_camporees attending_clubs_camporees[]
+  club_inventory            club_inventory[]
+  club_types                club_types                  @relation(fields: [club_typesClub_type_id], references: [club_type_id])
+  club_role_assignments     club_role_assignments[]
+  clubs                     clubs[]
+  finances                  finances[]
+  folders_modules_records   folders_modules_records[]
+  folders_section_records   folders_section_records[]
+  units                     units[]
+  users                     users[]
+}
+
+model club_master_guild {
+  club_mg_id                Int                         @id @default(autoincrement())
+  active                    Boolean                     @default(false)
+  souls_target              Int                         @default(1)
+  fee                       Int                         @default(1)
+  meeting_day               String[]
+  meeting_time              String[]
+  club_type_id              Int
+  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
+  modified_at               DateTime?                   @default(now()) @db.Timestamp(6)
+  activities                activities[]
+  attending_clubs_camporees attending_clubs_camporees[]
+  club_inventory            club_inventory[]
+  club_types                club_types                  @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  club_role_assignments     club_role_assignments[]
+  clubs                     clubs[]
+  finances                  finances[]
+  folders_modules_records   folders_modules_records[]
+  folders_section_records   folders_section_records[]
+  units                     units[]
+  users                     users[]
+}
+
+model club_role_assignments {
+  assignment_id          String              @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  user_id                String              @db.Uuid
+  role_id                String              @db.Uuid
+  club_adv_id            Int?
+  club_pathf_id          Int?
+  club_mg_id             Int?
+  ecclesiastical_year_id Int
+  start_date             DateTime            @db.Date
+  end_date               DateTime?           @db.Date
+  active                 Boolean?            @default(true)
+  created_at             DateTime?           @default(now()) @db.Timestamp(6)
+  modified_at            DateTime?           @default(now()) @db.Timestamp(6)
+  club_adventurers       club_adventurers?   @relation(fields: [club_adv_id], references: [club_adv_id], onDelete: Cascade, onUpdate: NoAction)
+  club_master_guild      club_master_guild?  @relation(fields: [club_mg_id], references: [club_mg_id], onDelete: Cascade, onUpdate: NoAction)
+  club_pathfinders       club_pathfinders?   @relation(fields: [club_pathf_id], references: [club_pathf_id], onDelete: Cascade, onUpdate: NoAction)
+  ecclesiastical_year    ecclesiastical_year @relation(fields: [ecclesiastical_year_id], references: [year_id], onDelete: Cascade, onUpdate: NoAction)
+  roles                  roles               @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction)
+  users                  users               @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, role_id, club_adv_id, club_pathf_id, club_mg_id, ecclesiastical_year_id, start_date], map: "club_role_assignment_unique")
+  @@index([club_adv_id], map: "idx_club_role_assignments_club_adv")
+  @@index([club_mg_id], map: "idx_club_role_assignments_club_mg")
+  @@index([club_pathf_id], map: "idx_club_role_assignments_club_pathf")
+  @@index([role_id], map: "idx_club_role_assignments_role")
+  @@index([user_id], map: "idx_club_role_assignments_user")
+  @@index([ecclesiastical_year_id], map: "idx_club_role_assignments_year")
 }
 
 model coordinators {
@@ -267,16 +380,17 @@ model districts {
 }
 
 model ecclesiastical_year {
-  year_id                                                                  Int               @id @default(autoincrement())
-  start_date                                                               DateTime          @db.Date
-  end_date                                                                 DateTime          @db.Date
-  active                                                                   Boolean           @default(false)
-  created_at                                                               DateTime?         @default(now()) @db.Timestamp(6)
-  modified_at                                                              DateTime?         @default(now()) @db.Timestamp(6)
-  classes                                                                  classes[]
-  folders                                                                  folders[]
-  local_camporees_local_camporees_ecclesiastical_yearToecclesiastical_year local_camporees[] @relation("local_camporees_ecclesiastical_yearToecclesiastical_year")
-  union_camporees_union_camporees_ecclesiastical_yearToecclesiastical_year union_camporees[] @relation("union_camporees_ecclesiastical_yearToecclesiastical_year")
+  year_id                  Int                     @id @default(autoincrement())
+  start_date               DateTime                @db.Date
+  end_date                 DateTime                @db.Date
+  active                   Boolean                 @default(false)
+  created_at               DateTime?               @default(now()) @db.Timestamp(6)
+  modified_at              DateTime?               @default(now()) @db.Timestamp(6)
+  classes                  classes[]
+  club_role_assignments    club_role_assignments[]
+  folders                  folders[]
+  local_camporees_relation local_camporees[]       @relation("local_camporees_ecclesiastical_yearToecclesiastical_year")
+  union_camporees_relation union_camporees[]       @relation("union_camporees_ecclesiastical_yearToecclesiastical_year")
 }
 
 model enrollments {
@@ -303,23 +417,29 @@ model error_logs {
 }
 
 model finances {
-  finance_id          Int                 @id @default(autoincrement())
-  year                Int
-  month               Int
-  amount              Int
-  description         String?
-  club_type_id        Int
-  club_id             Int
-  finance_category_id Int
-  finance_date        DateTime            @db.Date
-  active              Boolean             @default(false)
-  created_by          String              @db.Uuid
-  created_at          DateTime?           @default(now()) @db.Timestamp(6)
-  modified_at         DateTime?           @default(now()) @db.Timestamp(6)
-  clubs               clubs               @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  club_types          club_types          @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
-  users               users               @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-  finances_categories finances_categories @relation(fields: [finance_category_id], references: [finance_category_id], onDelete: NoAction, onUpdate: NoAction)
+  finance_id                    Int                 @id @default(autoincrement())
+  year                          Int
+  month                         Int
+  amount                        Int
+  description                   String?
+  club_type_id                  Int
+  club_id                       Int
+  finance_category_id           Int
+  finance_date                  DateTime            @db.Date
+  active                        Boolean             @default(false)
+  created_by                    String              @db.Uuid
+  created_at                    DateTime?           @default(now()) @db.Timestamp(6)
+  modified_at                   DateTime?           @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id   Int?
+  club_master_guildClub_mg_id   Int?
+  club_pathfindersClub_pathf_id Int?
+  club_adventurers              club_adventurers?   @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
+  clubs                         clubs               @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild             club_master_guild?  @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders              club_pathfinders?   @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
+  club_types                    club_types          @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users                         users               @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  finances_categories           finances_categories @relation(fields: [finance_category_id], references: [finance_category_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model finances_categories {
@@ -374,39 +494,51 @@ model folders_modules {
 }
 
 model folders_modules_records {
-  folder_module_record_id Int              @id @default(autoincrement())
-  club_id                 Int?
-  folder_id               Int?
-  module_id               Int?
-  points                  Int?             @default(0)
-  created_at              DateTime?        @default(now()) @db.Timestamp(6)
-  modified_at             DateTime?        @default(now()) @db.Timestamp(6)
-  clubs                   clubs?           @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  folders                 folders?         @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
-  folders_modules         folders_modules? @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
+  folder_module_record_id       Int                @id @default(autoincrement())
+  club_id                       Int?
+  folder_id                     Int?
+  module_id                     Int?
+  points                        Int?               @default(0)
+  created_at                    DateTime?          @default(now()) @db.Timestamp(6)
+  modified_at                   DateTime?          @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id   Int?
+  club_master_guildClub_mg_id   Int?
+  club_pathfindersClub_pathf_id Int?
+  club_adventurers              club_adventurers?  @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
+  clubs                         clubs?             @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild             club_master_guild? @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders              club_pathfinders?  @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
+  folders                       folders?           @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules               folders_modules?   @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([club_id, folder_id, module_id])
 }
 
 model folders_section_records {
-  folder_section_record_id Int               @id @default(autoincrement())
-  club_id                  Int?
-  folder_id                Int?
-  module_id                Int?
-  section_id               Int?
-  points                   Int?              @default(0)
-  evidence_1               String?           @db.VarChar(255)
-  evidence_2               String?           @db.VarChar(255)
-  evidence_3               String?           @db.VarChar(255)
-  evidence_4               String?           @db.VarChar(255)
-  evidence_5               String?           @db.VarChar(255)
-  pdf_file                 String?           @db.VarChar(255)
-  created_at               DateTime?         @default(now()) @db.Timestamp(6)
-  modified_at              DateTime?         @default(now()) @db.Timestamp(6)
-  clubs                    clubs?            @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  folders                  folders?          @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
-  folders_modules          folders_modules?  @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
-  folders_sections         folders_sections? @relation(fields: [section_id], references: [folder_section_id], onDelete: NoAction, onUpdate: NoAction)
+  folder_section_record_id      Int                @id @default(autoincrement())
+  club_id                       Int?
+  folder_id                     Int?
+  module_id                     Int?
+  section_id                    Int?
+  points                        Int?               @default(0)
+  evidence_1                    String?            @db.VarChar(255)
+  evidence_2                    String?            @db.VarChar(255)
+  evidence_3                    String?            @db.VarChar(255)
+  evidence_4                    String?            @db.VarChar(255)
+  evidence_5                    String?            @db.VarChar(255)
+  pdf_file                      String?            @db.VarChar(255)
+  created_at                    DateTime?          @default(now()) @db.Timestamp(6)
+  modified_at                   DateTime?          @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id   Int?
+  club_master_guildClub_mg_id   Int?
+  club_pathfindersClub_pathf_id Int?
+  club_adventurers              club_adventurers?  @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
+  clubs                         clubs?             @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild             club_master_guild? @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders              club_pathfinders?  @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
+  folders                       folders?           @relation(fields: [folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_modules               folders_modules?   @relation(fields: [module_id], references: [folder_module_id], onDelete: NoAction, onUpdate: NoAction)
+  folders_sections              folders_sections?  @relation(fields: [section_id], references: [folder_section_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([club_id, folder_id, module_id, section_id])
 }
@@ -462,24 +594,24 @@ model inventory_categories {
 }
 
 model local_camporees {
-  local_camporee_id                                                            Int                           @id @default(autoincrement())
-  name                                                                         String                        @db.VarChar(255)
-  description                                                                  String?
-  start_date                                                                   DateTime                      @db.Date
-  end_date                                                                     DateTime                      @db.Date
-  local_field_id                                                               Int
-  includes_adventurers                                                         Boolean?                      @default(false)
-  includes_pathfinders                                                         Boolean?                      @default(false)
-  includes_master_guides                                                       Boolean?                      @default(false)
-  local_camporee_place                                                         String                        @default("Lugar")
-  registration_cost                                                            Decimal?                      @db.Decimal(10, 2)
-  ecclesiastical_year                                                          Int
-  created_at                                                                   DateTime                      @default(now()) @db.Timestamp(6)
-  modified_at                                                                  DateTime                      @default(now()) @db.Timestamp(6)
-  attending_clubs_camporees                                                    attending_clubs_camporees[]
-  attending_members_camporees                                                  attending_members_camporees[]
-  ecclesiastical_year_local_camporees_ecclesiastical_yearToecclesiastical_year ecclesiastical_year           @relation("local_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
-  local_fields                                                                 local_fields                  @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
+  local_camporee_id            Int                           @id @default(autoincrement())
+  name                         String                        @db.VarChar(255)
+  description                  String?
+  start_date                   DateTime                      @db.Date
+  end_date                     DateTime                      @db.Date
+  local_field_id               Int
+  includes_adventurers         Boolean?                      @default(false)
+  includes_pathfinders         Boolean?                      @default(false)
+  includes_master_guides       Boolean?                      @default(false)
+  local_camporee_place         String                        @default("Lugar")
+  registration_cost            Decimal?                      @db.Decimal(10, 2)
+  ecclesiastical_year          Int
+  created_at                   DateTime                      @default(now()) @db.Timestamp(6)
+  modified_at                  DateTime                      @default(now()) @db.Timestamp(6)
+  attending_clubs_camporees    attending_clubs_camporees[]
+  attending_members_camporees  attending_members_camporees[]
+  ecclesiastical_year_relation ecclesiastical_year           @relation("local_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  local_fields                 local_fields                  @relation(fields: [local_field_id], references: [local_field_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model local_fields {
@@ -532,12 +664,13 @@ model role_permissions {
 }
 
 model roles {
-  role_id          String             @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
-  role_name        String             @unique @db.VarChar(255)
-  created_at       DateTime?          @default(now()) @db.Timestamp(6)
-  modified_at      DateTime?          @default(now()) @db.Timestamp(6)
-  role_permissions role_permissions[]
-  user_roles       user_roles[]
+  role_id               String                  @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  role_name             String                  @unique @db.VarChar(255)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  modified_at           DateTime?               @default(now()) @db.Timestamp(6)
+  club_role_assignments club_role_assignments[]
+  role_permissions      role_permissions[]
+  user_roles            user_roles[]
 }
 
 model union_camporee_local_fields {
@@ -552,23 +685,23 @@ model union_camporee_local_fields {
 }
 
 model union_camporees {
-  union_camporee_id                                                            Int                           @id @default(autoincrement())
-  name                                                                         String                        @db.VarChar(255)
-  description                                                                  String?
-  start_date                                                                   DateTime                      @db.Date
-  end_date                                                                     DateTime                      @db.Date
-  union_id                                                                     Int
-  includes_adventurers                                                         Boolean?                      @default(false)
-  includes_pathfinders                                                         Boolean?                      @default(false)
-  includes_master_guides                                                       Boolean?                      @default(false)
-  union_camporee_place                                                         String                        @default("Lugar")
-  registration_cost                                                            Decimal?                      @db.Decimal(10, 2)
-  ecclesiastical_year                                                          Int
-  created_at                                                                   DateTime                      @default(now()) @db.Timestamp(6)
-  modified_at                                                                  DateTime                      @default(now()) @db.Timestamp(6)
-  union_camporee_local_fields                                                  union_camporee_local_fields[]
-  ecclesiastical_year_union_camporees_ecclesiastical_yearToecclesiastical_year ecclesiastical_year           @relation("union_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
-  unions                                                                       unions                        @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
+  union_camporee_id            Int                           @id @default(autoincrement())
+  name                         String                        @db.VarChar(255)
+  description                  String?
+  start_date                   DateTime                      @db.Date
+  end_date                     DateTime                      @db.Date
+  union_id                     Int
+  includes_adventurers         Boolean?                      @default(false)
+  includes_pathfinders         Boolean?                      @default(false)
+  includes_master_guides       Boolean?                      @default(false)
+  union_camporee_place         String                        @default("Lugar")
+  registration_cost            Decimal?                      @db.Decimal(10, 2)
+  ecclesiastical_year          Int
+  created_at                   DateTime                      @default(now()) @db.Timestamp(6)
+  modified_at                  DateTime                      @default(now()) @db.Timestamp(6)
+  union_camporee_local_fields  union_camporee_local_fields[]
+  ecclesiastical_year_relation ecclesiastical_year           @relation("union_camporees_ecclesiastical_yearToecclesiastical_year", fields: [ecclesiastical_year], references: [year_id], onDelete: NoAction, onUpdate: NoAction)
+  unions                       unions                        @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model unions {
@@ -596,24 +729,30 @@ model unit_members {
 }
 
 model units {
-  unit_id                                  Int            @id @default(autoincrement())
-  name                                     String         @db.VarChar(255)
-  captain_id                               String         @db.Uuid
-  secretary_id                             String         @db.Uuid
-  advisor_id                               String         @db.Uuid
-  substitute_advisor_id                    String?        @db.Uuid
+  unit_id                                  Int                @id @default(autoincrement())
+  name                                     String             @db.VarChar(255)
+  captain_id                               String             @db.Uuid
+  secretary_id                             String             @db.Uuid
+  advisor_id                               String             @db.Uuid
+  substitute_advisor_id                    String?            @db.Uuid
   club_id                                  Int
   club_type_id                             Int
   active                                   Boolean
-  created_at                               DateTime       @default(now()) @db.Timestamp(6)
-  modified_at                              DateTime       @default(now()) @db.Timestamp(6)
+  created_at                               DateTime           @default(now()) @db.Timestamp(6)
+  modified_at                              DateTime           @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id              Int?
+  club_master_guildClub_mg_id              Int?
+  club_pathfindersClub_pathf_id            Int?
   unit_members                             unit_members[]
-  users_units_advisor_idTousers            users          @relation("units_advisor_idTousers", fields: [advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-  users_units_captain_idTousers            users          @relation("units_captain_idTousers", fields: [captain_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-  clubs                                    clubs          @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
-  club_types                               club_types     @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
-  users_units_secretary_idTousers          users          @relation("units_secretary_idTousers", fields: [secretary_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-  users_units_substitute_advisor_idTousers users?         @relation("units_substitute_advisor_idTousers", fields: [substitute_advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_advisor_idTousers            users              @relation("units_advisor_idTousers", fields: [advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_captain_idTousers            users              @relation("units_captain_idTousers", fields: [captain_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  club_adventurers                         club_adventurers?  @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
+  clubs                                    clubs              @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild                        club_master_guild? @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders                         club_pathfinders?  @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
+  club_types                               club_types         @relation(fields: [club_type_id], references: [club_type_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_secretary_idTousers          users              @relation("units_secretary_idTousers", fields: [secretary_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_units_substitute_advisor_idTousers users?             @relation("units_substitute_advisor_idTousers", fields: [substitute_advisor_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([name, club_id])
 }
@@ -677,10 +816,14 @@ model users {
   access_panel                             Boolean?                      @default(false)
   created_at                               DateTime?                     @default(now()) @db.Timestamp(6)
   modified_at                              DateTime?                     @default(now()) @db.Timestamp(6)
+  club_adventurersClub_adv_id              Int?
+  club_master_guildClub_mg_id              Int?
+  club_pathfindersClub_pathf_id            Int?
   activities                               activities[]
   attending_members_camporees              attending_members_camporees[]
   class_module_progress                    class_module_progress[]
   class_section_progress                   class_section_progress[]
+  club_role_assignments                    club_role_assignments[]
   coordinators                             coordinators?
   enrollments                              enrollments[]
   finances                                 finances[]
@@ -692,7 +835,10 @@ model users {
   user_honors                              user_honors[]
   user_permissions                         user_permissions[]
   user_roles                               user_roles[]
+  club_adventurers                         club_adventurers?             @relation(fields: [club_adventurersClub_adv_id], references: [club_adv_id])
   clubs                                    clubs?                        @relation(fields: [club_id], references: [club_id], onDelete: NoAction, onUpdate: NoAction)
+  club_master_guild                        club_master_guild?            @relation(fields: [club_master_guildClub_mg_id], references: [club_mg_id])
+  club_pathfinders                         club_pathfinders?             @relation(fields: [club_pathfindersClub_pathf_id], references: [club_pathf_id])
   countries                                countries?                    @relation(fields: [country_id], references: [country_id], onDelete: NoAction, onUpdate: NoAction)
   unions                                   unions?                       @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
   weekly_records                           weekly_records[]
@@ -727,10 +873,4 @@ enum blood_type {
 enum gender {
   Masculino
   Femenino
-}
-
-enum rol_type {
-  Administrativo
-  Operativo
-  Super
 }

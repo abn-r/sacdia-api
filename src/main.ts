@@ -22,10 +22,10 @@ async function bootstrap() {
 
   // swagger setup
   const config = new DocumentBuilder()
-    .setTitle('Calendar API')
-    .setDescription('This API helps you manage calendar data!')
+    .setTitle('Sacdia API')
+    .setDescription('This API helps!')
     .setVersion('1.0')
-    .addTag('calendar')
+    .addTag('iasd')
     .addBearerAuth(
       { in: 'header', type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'access-token',

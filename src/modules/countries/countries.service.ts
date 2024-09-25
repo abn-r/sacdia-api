@@ -1,16 +1,16 @@
+
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../prisma.service';
 import { Countries } from './countries.model';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CountriesService {
-
   // Declare a method that returns a promise of an array of Country objects
   constructor(private readonly prisma: PrismaService) {}
 
@@ -18,7 +18,6 @@ export class CountriesService {
     // Validate input
     if (!createCountryDto.name || !createCountryDto.abbreviation)
       throw new BadRequestException('Name and abbreviation are required');
-
 
     // Check if country already exists
     const existingCountry = await this.prisma.countries.findFirst({
@@ -31,7 +30,6 @@ export class CountriesService {
     });
 
     if (existingCountry) throw new ConflictException('Country with this name or abbreviation already exists');
-
 
     try {
       return await this.prisma.countries.create({
@@ -60,7 +58,7 @@ export class CountriesService {
     });
   }
 
-  async findOne(id: number): Promise<Countries> {
+  async findOne(id: number): Promise<Countries> { 
     const country = await this.prisma.countries.findUnique({
       where: { country_id: id },
     });
