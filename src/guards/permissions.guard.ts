@@ -33,7 +33,7 @@ export class PermissionsGuard implements CanActivate {
 
     // Obtener roles del usuario
     const userRoles = await this.prisma.user_roles.findMany({
-      where: { user_id: user.id },
+      where: { user_id: user.user_id },
       select: {
         role_id: true,
         roles: { select: { role_name: true } }
@@ -44,7 +44,7 @@ export class PermissionsGuard implements CanActivate {
 
     // Verificar si el usuario tiene alguno de los roles requeridos
     const hasRequiredRole = requiredRoles.length > 0 && requiredRoles.some(role => userRoleNames.includes(role));
-    
+
     const userPermissions = await this.prisma.role_permissions.findMany({
       where: {
         role_id: {

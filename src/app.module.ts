@@ -6,6 +6,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from './prisma.module';
 import { SessionService } from './session.service';
 import { AuthModule } from './modules/auth/auth.module';
+import { UnionsModule } from './modules/unions/unions.module';
+import { LocalFieldsModule } from './modules/local-fields/local-fields.module';
+import { DistrictsModule } from './modules/districts/districts.module';
+import { ChurchesModule } from './modules/churches/churches.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -20,7 +25,12 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     AuthModule,
     PrismaModule,
-    CountriesModule],
+    CountriesModule,
+    UnionsModule,
+    LocalFieldsModule,
+    DistrictsModule,
+    ChurchesModule,
+    UsersModule],
   controllers: [],
   providers: [
     PrismaService,

@@ -34,8 +34,9 @@ export class AuthService {
         email: data.user.email,
         password: hashedPassword,
       });
+      await this.assing_role(data.user.id);
     } catch (dbError) {
-      // Si falla la creación en la base de datos local, eliminamos el usuario de Supabase
+      // if fails to create user in local database, delete user from Supabase
       await this.supabase.auth.admin.deleteUser(data.user.id);
       throw new InternalServerErrorException('Error: ' + dbError.message);
     }
@@ -46,9 +47,9 @@ export class AuthService {
       throw error;
     }
     if (error.message === 'User already registered') {
-      throw new ConflictException('El usuario ya está registrado');
+      throw new ConflictException('User already registered');
     }
-    throw new InternalServerErrorException('Error durante el registro');
+    throw new InternalServerErrorException('Error during registration');
   }
 
 
@@ -64,11 +65,10 @@ export class AuthService {
 
   async signOut(token: string) {
     try {
-      // Verificar y decodificar el token
+      // Verifiy and decode token
       const decodedToken = this.jwtService.verify(token);
-      console.log('Usuario cerrando sesión:', decodedToken);
 
-      // Cerrar sesión en Supabase
+      // Close session in Supabase
       const { error } = await this.supabase.auth.signOut();
       if (error) throw error;
 
@@ -103,7 +103,7 @@ export class AuthService {
       throw new InternalServerErrorException('Error al solicitar el restablecimiento de contraseña');
     }
   }
-  
+
 
   async resetPassword(newPassword: string, token: string) {
     try {
@@ -121,9 +121,6 @@ export class AuthService {
       throw new InternalServerErrorException('Error al restablecer la contraseña');
     }
   }
-
-  // ========================================================================== //
-
 
   private generateToken(user: any) {
     const payload = { email: user.email, sub: user.id };
@@ -158,10 +155,23 @@ export class AuthService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ConflictException('El email ya está en uso');
+          throw new ConflictException('Email already in use');
         }
       }
-      throw new InternalServerErrorException('Error al crear el usuario en la base de datos local');
+      throw new InternalServerErrorException('Error to create user');
+    }
+  }
+
+  async assing_role(user_id: string) {
+    try {
+      return await this.prisma.user_roles.create({
+        data: {
+          user_id: user_id,
+          role_id: process.env.DEFAULT_ROLE,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Error to assign role');
     }
   }
 }
