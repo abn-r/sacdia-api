@@ -5,7 +5,7 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../prisma.service';
 
 
 @Injectable()
@@ -40,7 +40,7 @@ export class ChurchesService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ConflictException('A district with this name already exists');
+          throw new ConflictException('A church with this name already exists');
         }
         if (error.code === 'P2025') {
           throw new BadRequestException(`The specified church does not exist`);
@@ -125,7 +125,7 @@ export class ChurchesService {
         message: `Church "${updateChurchDto.name}" updated successfully`
       }
     } catch (error) {
-      throw new BadRequestException('Unable to soft delete Districts');
+      throw new BadRequestException('Unable to soft delete Church');
     }
   }
 
@@ -144,7 +144,7 @@ export class ChurchesService {
         message: 'Church deleted successfully'
       };
     } catch (error) {
-      throw new BadRequestException('Unable to soft delete Districts');
+      throw new BadRequestException('Unable to soft delete Church');
     }
   }
 }

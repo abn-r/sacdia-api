@@ -16,6 +16,8 @@ export const TREASURER = 'treasurer';
 export const SECRETARY_TREASURER = 'secretary-treasurer';
 export const COUNSELOR = 'counselor';
 export const USER = 'user';
+
+// Groups of roles
 export const ALL = [
     SUPER_ADMIN,
     ADMIN,
@@ -35,4 +37,32 @@ export const ALL = [
     SECRETARY_TREASURER,
     COUNSELOR,
     USER,
+];
+
+export const ALL_ADMIN = [
+    SUPER_ADMIN,
+    ADMIN,
+];
+
+export const LF_ADMIN = [
+    DIRECTOR_LF,
+    ASSISTANT_LF
+];
+
+export const CLUB_ALL = [
+    DIRECTOR,
+    DEPUTY_DIRECTOR,
+    SECRETARY,
+    TREASURER,
+    SECRETARY_TREASURER,
+    COUNSELOR,
+    USER,
+];
+
+export const CLUB_ADMIN = [
+    DIRECTOR,
+    DEPUTY_DIRECTOR,
+    SECRETARY,
+    TREASURER,
+    SECRETARY_TREASURER,
 ];

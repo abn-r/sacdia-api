@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ChurchesService } from './churches.service';
 import { Prisma } from '@prisma/client';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/guards/permissions.guard';
 import { Roles, Permissions } from '../../decorators/rbac.decorators';
 import * as PERMISSIONS from '../../constants/permissions';
@@ -34,7 +34,7 @@ export class ChurchesController {
 
   @Get()
   @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_DISTRICTS)
+  @Permissions(PERMISSIONS.READ_CHURCHES)
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query('skip') skip?: string,
@@ -54,7 +54,7 @@ export class ChurchesController {
 
   @Get(':id')
   @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_DISTRICTS)
+  @Permissions(PERMISSIONS.READ_CHURCHES)
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string) {
     return this.churchesService.findOne({ church_id: +id });
@@ -62,7 +62,7 @@ export class ChurchesController {
 
   @Patch(':id')
   @Roles(ROLES.ADMIN, ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.UPDATE_DISTRICTS)
+  @Permissions(PERMISSIONS.UPDATE_CHURCHES)
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
@@ -73,7 +73,7 @@ export class ChurchesController {
 
   @Delete(':id')
   @Roles(ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.DELETE_DISTRICTS)
+  @Permissions(PERMISSIONS.DELETE_CHURCHES)
   @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
     return this.churchesService.remove({ church_id: +id });

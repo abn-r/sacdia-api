@@ -16,5 +16,6 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
+    "types": ["node", "express", "multer"]
   },
 }

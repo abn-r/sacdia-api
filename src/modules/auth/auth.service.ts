@@ -18,7 +18,7 @@ export class AuthService {
     );
   }
 
-  async signUp(email: string, password: string) {
+  async signUp(email: string, password: string, name:string) {
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
@@ -32,9 +32,10 @@ export class AuthService {
       await this.createUser({
         user_id: data.user.id,
         email: data.user.email,
-        password: hashedPassword,
+        name: name,
       });
       await this.assing_role(data.user.id);
+      await this.create_pr(data.user.id);
     } catch (dbError) {
       // if fails to create user in local database, delete user from Supabase
       await this.supabase.auth.admin.deleteUser(data.user.id);
@@ -132,7 +133,7 @@ export class AuthService {
   async createUser(userData: {
     user_id: string;
     email: string;
-    password: string;
+    name: string;
   }) {
     try {
       return await this.prisma.$transaction(async (prisma) => {
@@ -140,7 +141,7 @@ export class AuthService {
           data: {
             user_id: userData.user_id,
             email: userData.email,
-            name: 'name',
+            name: userData.name,
             gender: 1,
             baptism: false,
             apple_connected: false,
@@ -172,6 +173,19 @@ export class AuthService {
       });
     } catch (error) {
       throw new InternalServerErrorException('Error to assign role');
+    }
+  }
+
+  async create_pr(user_id: string) {
+    try {
+      return await this.prisma.users_pr.create({
+        data: {
+          user_id: user_id,
+          complete: false,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Error to complete registration');
     }
   }
 }

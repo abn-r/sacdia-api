@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { Prisma } from '@prisma/client';
-import { CreateDistrictDto } from './dtos/districts.dto';
 
 @Injectable()
 export class DistrictsService {
@@ -15,71 +14,7 @@ export class DistrictsService {
 
   constructor(private prisma: PrismaService) {}
 
-  // async create(createDistrictDto: CreateDistrictDto) {
-
-  //   const { local_field_id, ...districtData } = createDistrictDto;
-
-  //   try {
-  //     const localField = await this.prisma.local_fields.findUnique({
-  //       where: { local_field_id: local_field_id }
-  //     });
-  //     if (!localField) {
-  //       this.logger.error(`Local field with id ${local_field_id} does not exist`);
-  //       throw new BadRequestException(`The specified local_field_id (${local_field_id}) does not exist`);
-  //     }
-  //     this.logger.log(`Local field with id ${local_field_id} exists`);
-  //   } catch (error) {
-  //     this.logger.error(`Error checking local field: ${error.message}`);
-  //     throw new BadRequestException(`Error checking local field: ${error.message}`);
-  //   }
-
-  //   try {
-  //     const existingDistrict = await this.prisma.districts.findFirst({
-  //       where: { name: districtData.name }
-  //     });
-
-  //     if (existingDistrict) {
-  //       this.logger.warn(`District with name "${districtData.name}" already exists. District ID: ${existingDistrict.district_id}`);
-  //       throw new ConflictException(`A district with the name "${districtData.name}" already exists. District ID: ${existingDistrict.district_id}`);
-  //     }
-  //     this.logger.log(`No existing district found with name "${districtData.name}"`);
-  //   } catch (error) {
-  //     if (error instanceof ConflictException) {
-  //       throw error;
-  //     }
-  //     this.logger.error(`Error checking existing district: ${error.message}`);
-  //     throw new BadRequestException(`Error checking existing district: ${error.message}`);
-  //   }
-
-  //   const districtCreateInput: Prisma.districtsCreateInput = {
-  //     ...districtData,
-  //     local_fields: {
-  //       connect: { local_field_id: local_field_id }
-  //     }
-  //   };
-
-  //   try {
-  //     this.logger.log(`Attempting to create district with input: ${JSON.stringify(districtCreateInput)}`);
-  //     const newDistrict = await this.prisma.districts.create({
-  //       data: districtCreateInput,
-  //     });
-  //     this.logger.log(`District created successfully: ${JSON.stringify(newDistrict)}`);
-  //     return newDistrict;
-  //   } catch (error) {
-  //     this.logger.error(`Error creating district: ${error.message}`);
-  //     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-  //       if (error.code === 'P2002') {
-  //         throw new ConflictException('A district with this name already exists');
-  //       }
-  //       if (error.code === 'P2025') {
-  //         throw new BadRequestException(`The specified local_field_id (${local_field_id}) does not exist`);
-  //       }
-  //     }
-  //     throw new BadRequestException(`Could not create district: ${error.message}`);
-  //   }
-  // }
-
-  async create(createDistrictDto: Prisma.districtsCreateInput) {
+    async create(createDistrictDto: Prisma.districtsCreateInput) {
     if (!createDistrictDto.name  ) { 
       throw new BadRequestException('Name are required');
     } 
@@ -91,20 +26,20 @@ export class DistrictsService {
     });
 
     if (existingLocalField) {
-      throw new ConflictException('Local Field with this name already exists');
+      throw new ConflictException('District with this name already exists');
     }
 
     try {
-      const newLF = await this.prisma.districts.create({
+      const newDistrict = await this.prisma.districts.create({
         data: createDistrictDto,
       });
 
-      const ldistrictDto = {
-        district_id: newLF.district_id,
-        name: newLF.name,
+      const districtDto = {
+        district_id: newDistrict.district_id,
+        name: newDistrict.name,
       }
 
-      return ldistrictDto
+      return districtDto
     } catch (error) {
       throw new BadRequestException('Invalid data provided');
     }
@@ -149,8 +84,7 @@ export class DistrictsService {
         where: {
           OR: [
             { name: updateDistrictsDto.name as string },
-            { local_fields: { name: updateDistrictsDto.local_fields as string } },
-            { local_fields: { abbreviation: updateDistrictsDto.local_fields as string } }
+            { local_fields: { name: updateDistrictsDto.local_fields as string } }
           ],
           NOT: { local_field_id: id }
         }

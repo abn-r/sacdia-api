@@ -11,6 +11,12 @@ import { LocalFieldsModule } from './modules/local-fields/local-fields.module';
 import { DistrictsModule } from './modules/districts/districts.module';
 import { ChurchesModule } from './modules/churches/churches.module';
 import { UsersModule } from './modules/users/users.module';
+import { FileUploadModule } from './modules/file_upload/file_upload.module';
+import { ClubsModule } from './modules/clubs/clubs.module';
+import { ClassesModule } from './modules/classes/classes.module';
+import { ClubTypesModule } from './modules/club_types/club_types.module';
+import { HonorsModule } from './modules/honors/honors.module';
+import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
   imports: [
@@ -30,7 +36,13 @@ import { UsersModule } from './modules/users/users.module';
     LocalFieldsModule,
     DistrictsModule,
     ChurchesModule,
-    UsersModule],
+    UsersModule,
+    FileUploadModule,
+    ClubsModule,
+    ClassesModule,
+    ClubTypesModule,
+    HonorsModule,
+    SupabaseModule],
   controllers: [],
   providers: [
     PrismaService,

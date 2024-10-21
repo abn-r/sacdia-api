@@ -18,24 +18,25 @@ import { Roles, Permissions } from '../../decorators/rbac.decorators';
 import { PermissionsGuard } from '../../guards/permissions.guard';
 import * as PERMISSIONS from '../../constants/permissions';
 import * as ROLES from '../../constants/roles';
-import { DistrictsService } from './districts.service';
+import { ClubsService } from './clubs.service';
 
-@Controller('districts')
+
+@Controller('clubs')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
-export class DistrictsController {
-  constructor(private readonly districtsService: DistrictsService) {}
+export class ClubsController {
+  constructor(private readonly clubsService: ClubsService) {}
 
   @Post()
-  @Roles(ROLES.ADMIN, ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.CREATE_DISTRICTS)
+  @Roles(...ROLES.ALL_ADMIN, ...ROLES.LF_ADMIN)
+  @Permissions(PERMISSIONS.CREATE_CLUBS)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createDistrictDto: Prisma.districtsCreateInput) {
-    return this.districtsService.create(createDistrictDto);
+  create(@Body() createClubDto: Prisma.clubsCreateInput) {
+    return this.clubsService.create(createClubDto);
   }
 
   @Get()
   @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_DISTRICTS)
+  @Permissions(PERMISSIONS.READ_CLUBS)
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query('skip') skip?: string,
@@ -44,10 +45,10 @@ export class DistrictsController {
     @Query('where') where?: string,
     @Query('orderBy') orderBy?: string
   ) {
-    return await this.districtsService.findAll({
+    return await this.clubsService.findAll({
       skip: +skip || 0,
       take: +take || 10,
-      cursor: cursor ? { district_id: +cursor } : undefined,
+      cursor: cursor ? { club_id: +cursor } : undefined,
       where: where ? JSON.parse(where) : undefined,
       orderBy: orderBy ? JSON.parse(orderBy) : undefined,
     });
@@ -55,33 +56,34 @@ export class DistrictsController {
 
   @Get(':id')
   @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_DISTRICTS)
+  @Permissions(PERMISSIONS.READ_CLUBS)
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.districtsService.findOne(id);
+    return this.clubsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(ROLES.ADMIN, ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.UPDATE_DISTRICTS)
+  @Roles(...ROLES.ALL_ADMIN, ...ROLES.LF_ADMIN, ...ROLES.CLUB_ADMIN)
+  @Permissions(PERMISSIONS.UPDATE_CLUBS)
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDistrictDto: Prisma.districtsUpdateInput
+    @Body() updateClubDto: Prisma.clubsUpdateInput
   ) {
-    return this.districtsService.update(id, updateDistrictDto);
+    return this.clubsService.update(id, updateClubDto);
   }
 
   @Delete(':id')
   @Roles(ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.DELETE_DISTRICTS)
+  @Permissions(PERMISSIONS.DELETE_CLUBS)
   @HttpCode(HttpStatus.OK)
   remove(
     @Param('id', ParseIntPipe) id: number,
     @Query('soft') soft?: boolean
   ) {
     return soft
-      ? this.districtsService.softDelete(id)
-      : this.districtsService.remove(id);
+      ? this.clubsService.softDelete(id)
+      : this.clubsService.remove(id);
   }
 }
+
