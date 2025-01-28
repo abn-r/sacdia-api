@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -169,7 +169,7 @@ model classes {
   class_section_progress class_section_progress[]
   club_types             club_types               @relation(fields: [club_type_id], references: [ct_id], onDelete: NoAction, onUpdate: NoAction)
   enrollments            enrollments[]
-  users_classes users_classes[]
+  users_classes          users_classes[]
 }
 
 model club_ideals {
@@ -859,9 +859,9 @@ model users {
   club_pathfinders            club_pathfinders?             @relation(fields: [club_pathf_id], references: [club_pathf_id])
   countries                   countries?                    @relation(fields: [country_id], references: [country_id], onDelete: NoAction, onUpdate: NoAction)
   unions                      unions?                       @relation(fields: [union_id], references: [union_id], onDelete: NoAction, onUpdate: NoAction)
-  weekly_records              weekly_records[]
   users_classes               users_classes[]
   users_pr                    users_pr[]
+  weekly_records              weekly_records[]
 }
 
 model users_pr {
@@ -920,7 +920,7 @@ model diseases {
   name          String          @unique
   description   String?
   created_at    DateTime        @default(now()) @db.Timestamp(6)
-  modified_at   DateTime        @updatedAt @db.Timestamp(6)
+  modified_at   DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @db.Timestamp(6)
   active        Boolean         @default(true)
   user_diseases user_diseases[]
 }
