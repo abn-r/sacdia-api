@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '@prisma/client';
+import { UUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,12 @@ export class AuthService {
     );
   }
 
-  async signUp(email: string, password: string, name:string) {
+  async signUp(
+    email: string,
+    password: string,
+    name: string,
+    p_lastname: string,
+    m_lastname: string) {
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
@@ -33,9 +39,13 @@ export class AuthService {
         user_id: data.user.id,
         email: data.user.email,
         name: name,
+        p_lastname: p_lastname,
+        m_lastname: m_lastname,
       });
+
       await this.assing_role(data.user.id);
       await this.create_pr(data.user.id);
+      console.log('Registro completado');
     } catch (dbError) {
       // if fails to create user in local database, delete user from Supabase
       await this.supabase.auth.admin.deleteUser(data.user.id);
@@ -45,7 +55,7 @@ export class AuthService {
     return this.generateToken(data.user);
   } catch(error: { message: string; }) {
     if (error instanceof ConflictException) {
-      throw error;
+      throw 'Se generó el siguiente error: ' + error;
     }
     if (error.message === 'User already registered') {
       throw new ConflictException('User already registered');
@@ -72,13 +82,6 @@ export class AuthService {
       // Close session in Supabase
       const { error } = await this.supabase.auth.signOut();
       if (error) throw error;
-
-      // Aquí podrías realizar cualquier limpieza adicional necesaria en tu aplicación
-      // Por ejemplo, invalidar el token en una lista negra, actualizar el estado del usuario, etc.
-
-      // Si estás usando una lista negra de tokens, podrías agregar el token a esa lista aquí
-      // await this.tokenBlacklistService.addToBlacklist(token);
-
       return { message: 'Sesión cerrada exitosamente' };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -105,7 +108,6 @@ export class AuthService {
     }
   }
 
-
   async resetPassword(newPassword: string, token: string) {
     try {
       const { data, error } = await this.supabase.auth.updateUser({
@@ -126,6 +128,7 @@ export class AuthService {
   private generateToken(user: any) {
     const payload = { email: user.email, sub: user.id };
     return {
+      user_id: user.id,
       access_token: this.jwtService.sign(payload),
     };
   }
@@ -134,6 +137,8 @@ export class AuthService {
     user_id: string;
     email: string;
     name: string;
+    p_lastname: string;
+    m_lastname: string;
   }) {
     try {
       return await this.prisma.$transaction(async (prisma) => {
@@ -142,6 +147,8 @@ export class AuthService {
             user_id: userData.user_id,
             email: userData.email,
             name: userData.name,
+            paternal_last_name: userData.p_lastname,
+            mother_last_name: userData.m_lastname,
             gender: 1,
             baptism: false,
             apple_connected: false,
@@ -181,7 +188,52 @@ export class AuthService {
       return await this.prisma.users_pr.create({
         data: {
           user_id: user_id,
-          complete: false,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Error to create registration');
+    }
+  }
+
+  async check_pr(user_id: string) {
+    try {
+      return await this.prisma.users_pr.findFirst({
+        where: {
+          user_id: user_id,
+        },
+        select: {
+          complete: true,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Error to check registration');
+    }
+  }
+
+  async complete_pr(user_id: string) {
+    try {
+      const userPrRecord = await this.prisma.users_pr.findFirst({
+        where: {
+          user_id: user_id,
+        },
+        select: {
+          user_pr_id: true,
+        },
+      });
+
+      if (!userPrRecord) {
+        throw new InternalServerErrorException('User registration not found');
+      }
+
+      const pr_id = userPrRecord.user_pr_id;
+
+      return await this.prisma.users_pr.update({
+        where: {
+          user_pr_id: pr_id,
+        },
+        data: {
+          complete: true,
+          date_completed: new Date(),
         },
       });
     } catch (error) {
