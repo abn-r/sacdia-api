@@ -28,7 +28,6 @@ export class FileUploadService {
   }
 
   async uploadProfilePicture(file: Express.Multer.File, userId: string) {
-    console.log('uploading profile picture :)');
     const user = await this.prisma.users.findUnique({
       where: { user_id: userId },
     });

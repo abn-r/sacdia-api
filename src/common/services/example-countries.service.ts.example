@@ -1,0 +1,111 @@
+/**
+ * EXAMPLE: How to refactor CountriesService using GenericCrudService
+ * This file shows the pattern for refactoring catalog services
+ * 
+ * Original: ~270 lines → Refactored: ~60 lines
+ */
+
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { PrismaService } from '../../prisma.service';
+import { GenericCrudService } from './generic-crud.service';
+import { Prisma } from '@prisma/client';
+
+// Define the model type
+interface Country {
+  country_id: number;
+  name: string;
+  abbreviation: string;
+}
+
+// Define DTOs (can be moved to separate files)
+type CreateCountryDto = Prisma.countriesCreateInput;
+type UpdateCountryDto = Prisma.countriesUpdateInput;
+
+@Injectable()
+export class CountriesServiceRefactored extends GenericCrudService<Country, CreateCountryDto, UpdateCountryDto> {
+  
+  constructor(
+    prisma: PrismaService,
+    @Inject(CACHE_MANAGER) cacheManager: Cache
+  ) {
+    super(prisma, cacheManager, {
+      modelName: 'Country',
+      idField: 'country_id',
+      nameField: 'name',
+      cacheTTL: 3600000, // 1 hour
+      enableCache: true
+    });
+  }
+
+  protected getModel() {
+    return this.prisma.countries;
+  }
+
+  protected getSelectFields() {
+    return {
+      country_id: true,
+      name: true,
+      abbreviation: true
+    };
+  }
+
+  protected async validateCreate(dto: CreateCountryDto): Promise<void> {
+    if (!dto.name || !dto.abbreviation) {
+      throw new BadRequestException({
+        status: false,
+        message: 'Name and abbreviation are required'
+      });
+    }
+  }
+
+  protected async checkDuplicate(dto: CreateCountryDto | UpdateCountryDto, excludeId?: number): Promise<void> {
+    const name = dto.name as string;
+    const abbreviation = dto.abbreviation as string;
+    
+    if (!name && !abbreviation) return;
+
+    const existing = await this.prisma.countries.findFirst({
+      where: {
+        OR: [
+          name ? { name } : {},
+          abbreviation ? { abbreviation } : {}
+        ].filter(obj => Object.keys(obj).length > 0),
+        NOT: excludeId ? { country_id: excludeId } : undefined
+      }
+    });
+
+    if (existing) {
+      throw new ConflictException({
+        status: false,
+        message: 'Country with this name or abbreviation already exists'
+      });
+    }
+  }
+
+  // Custom method specific to this service
+  async createMany(countries: CreateCountryDto[]): Promise<{ status: boolean; message: string; count: number }> {
+    try {
+      const result = await this.prisma.countries.createMany({
+        data: countries as any,
+        skipDuplicates: true
+      });
+
+      await this.invalidateCache();
+
+      return {
+        status: true,
+        message: 'Countries created successfully',
+        count: result.count
+      };
+    } catch (error) {
+      this.logger.error('Error creating multiple countries', error);
+      throw new BadRequestException({
+        status: false,
+        message: 'Error creating countries'
+      });
+    }
+  }
+}

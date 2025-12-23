@@ -13,10 +13,9 @@ async function generatePermissions() {
   });
 
   const content = lines.join('\n');
-  const filePath = join(__dirname, '../constants/permissions.ts');
+  const filePath = join(__dirname, 'src/common/constants/permissions.ts'); 
   
   writeFileSync(filePath, content, { encoding: 'utf8' });
-  console.log(`Permissions constants file generated at ${filePath}`);
 }
 
 generatePermissions()

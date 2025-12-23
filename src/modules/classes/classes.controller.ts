@@ -1,52 +1,35 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-  ParseIntPipe,
-  Query
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { Roles, Permissions } from '../../decorators/rbac.decorators';
-import { PermissionsGuard } from '../../guards/permissions.guard';
-import * as PERMISSIONS from '../../constants/permissions';
-import * as ROLES from '../../constants/roles';
+import { ClassesController as ClassesControllerDecorator } from '../../common/decorators/classes-controller.decorator';
+import { ReadClasses, CreateClasses, UpdateClasses, DeleteClasses } from '../../common/decorators/classes-endpoint.decorator';
+import { TransformClassesResponse } from '../../common/decorators/transform-classes-response.decorator';
+import { Classes } from './classes.model';
 import { ClassesService } from './classes.service';
 
-@Controller('classes')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ClassesControllerDecorator('classes')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
   @Post()
-  @Roles(...ROLES.ALL_ADMIN, ...ROLES.LF_ADMIN)
-  @Permissions(PERMISSIONS.CREATE_CLASSES)
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body() createClubDto: Prisma.classesCreateInput) {
-    return this.classesService.create(createClubDto);
+  @CreateClasses()
+  @TransformClassesResponse()
+  create(@Body() createClassDto: Prisma.classesCreateInput) {
+    return this.classesService.create(createClassDto);
   }
 
   @Get()
-  @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_CLASSES)
-  @HttpCode(HttpStatus.OK)
+  @ReadClasses()
+  @TransformClassesResponse({ idField: 'class_id' })
   async findAll(
     @Query('skip') skip?: string,
     @Query('take') take?: string,
     @Query('cursor') cursor?: string,
     @Query('where') where?: string,
     @Query('orderBy') orderBy?: string
-  ) {
+  ){
     return await this.classesService.findAll({
       skip: +skip || 0,
-      take: +take || 10,
+      take: +take || 100,
       cursor: cursor ? { class_id: +cursor } : undefined,
       where: where ? JSON.parse(where) : undefined,
       orderBy: orderBy ? JSON.parse(orderBy) : undefined,
@@ -54,35 +37,33 @@ export class ClassesController {
   }
 
   @Get(':id')
-  @Roles(...ROLES.ALL)
-  @Permissions(PERMISSIONS.READ_CLASSES)
-  @HttpCode(HttpStatus.OK)
+  @ReadClasses()
+  @TransformClassesResponse({ idField: 'class_id' })
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.classesService.findOne(id);
+    return this.classesService.findOne(+id);
   }
 
   @Patch(':id')
-  @Roles(...ROLES.ALL_ADMIN, ...ROLES.LF_ADMIN, ...ROLES.CLUB_ADMIN)
-  @Permissions(PERMISSIONS.UPDATE_CLASSES)
-  @HttpCode(HttpStatus.OK)
+  @UpdateClasses()
+  @TransformClassesResponse()
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateClubDto: Prisma.classesUpdateInput
+    @Body() updateClassDto: Prisma.classesUpdateInput
   ) {
-    return this.classesService.update(id, updateClubDto);
+    return this.classesService.update(id, updateClassDto);
   }
 
   @Delete(':id')
-  @Roles(ROLES.SUPER_ADMIN)
-  @Permissions(PERMISSIONS.DELETE_CLASSES)
-  @HttpCode(HttpStatus.OK)
+  @DeleteClasses()
+  @TransformClassesResponse()
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @Query('soft') soft?: boolean
+    //@Query('soft') soft?: boolean
   ) {
-    return soft
-      ? this.classesService.softDelete(id)
-      : this.classesService.remove(id);
+    // return soft
+    //   ? this.classesService.softDelete(id)
+    //   : this.classesService.remove(id);
+    return this.classesService.softDelete(id);
   }
 }
 

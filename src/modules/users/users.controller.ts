@@ -11,18 +11,21 @@ import {
   HttpStatus,
   Query,
   ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { Prisma } from '@prisma/client';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { PermissionsGuard } from 'src/guards/permissions.guard';
-import { Roles, Permissions } from '../../decorators/rbac.decorators';
-import * as PERMISSIONS from '../../constants/permissions';
-import * as ROLES from '../../constants/roles';
+import { Roles, Permissions } from '../../common/decorators/rbac.decorators';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { SupabaseGuard } from '../../common/guards/supabase.guard';
+import * as PERMISSIONS from '../../common/constants/permissions';
+import * as ROLES from '../../common/constants/roles';
 
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiTags('Users')
+@UseGuards(SupabaseGuard, PermissionsGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -50,7 +53,7 @@ export class UsersController {
   @Roles(...ROLES.ALL)
   @Permissions(PERMISSIONS.READ_USERS)
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne({ user_id: id });
   }
 
@@ -60,9 +63,9 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
-    @Body() updateSongDto: Prisma.usersUpdateInput,
+    @Body() updateUserDto: Prisma.usersUpdateInput,
   ) {
-    return this.usersService.update({ user_id: id }, updateSongDto);
+    return this.usersService.update({ user_id: id }, updateUserDto);
   }
 
   @Delete(':id')

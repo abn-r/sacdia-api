@@ -1,63 +1,90 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Request
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, UnauthorizedException, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { SupabaseGuard } from '../../common/guards/supabase.guard';
+import { UserProfileResponseDto } from './models/profile-response.dto';
+import { SignUpDto, SignInDto, RequestPasswordResetDto, ResetPasswordDto } from './dto';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signUp(@Body() signUpDto: {
-    email: string;
-    password: string,
-    name: string,
-    p_lastname: string,
-    m_lastname: string
-  }) {
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid data or email already exists' })
+  signUp(@Body() signUpDto: SignUpDto) {
     return this.authService.signUp(
       signUpDto.email,
       signUpDto.password,
       signUpDto.name,
       signUpDto.p_lastname,
-      signUpDto.m_lastname
+      signUpDto.m_lastname,
     );
   }
 
   @Post('signin')
-  signIn(@Body() signInDto: { email: string; password: string }) {
+  @ApiOperation({ summary: 'Sign in with email and password' })
+  @ApiResponse({ status: 200, description: 'User signed in successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  signIn(@Body() signInDto: SignInDto) {
     return this.authService.signIn(signInDto.email, signInDto.password);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseGuard)
   @Post('signout')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Sign out current user' })
+  @ApiResponse({ status: 200, description: 'User signed out successfully' })
   signOut(@Request() req) {
     const token = req.headers.authorization.split(' ')[1];
     return this.authService.signOut(token);
   }
 
   @Post('request-password-reset')
-  requestPasswordReset(@Body('email') email: string) {
-    return this.authService.requestPasswordReset(email);
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiResponse({ status: 200, description: 'Reset email sent if user exists' })
+  requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    return this.authService.requestPasswordReset(dto.email);
   }
 
   @Post('password-reset')
-  resetPassword(@Body() resetData: { newPassword: string, token: string }) {
-    return this.authService.resetPassword(resetData.newPassword, resetData.token);
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiResponse({ status: 200, description: 'Password updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  resetPassword(@Body() resetDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetDto.newPassword, '');
   }
 
+  @UseGuards(SupabaseGuard)
   @Post('pr-check')
-  checkRegister(@Body() registerData: { user_id: string }) {
-    return this.authService.check_pr(registerData.user_id);
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Check if user profile registration is complete' })
+  @ApiResponse({ status: 200, description: 'Registration status returned' })
+  checkRegister(@Request() req) {
+    return this.authService.check_pr(req.user.id);
   }
 
+  @UseGuards(SupabaseGuard)
   @Post('pr-complete')
-  completeRegister(@Body() registerData: { user_id: string }) {
-    return this.authService.complete_pr(registerData.user_id);
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Mark user profile registration as complete' })
+  @ApiResponse({ status: 200, description: 'Registration completed' })
+  completeRegister(@Request() req) {
+    return this.authService.complete_pr(req.user.id);
+  }
+
+  @UseGuards(SupabaseGuard)
+  @Get('profile')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get current user profile with roles and permissions' })
+  @ApiResponse({ status: 200, description: 'User profile returned' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getProfile(@Request() req): Promise<UserProfileResponseDto> {
+    if (!req.user || !req.user.id) {
+      throw new UnauthorizedException('Could not identify user from token');
+    }
+    return this.authService.getProfile(req.user.id);
   }
 }

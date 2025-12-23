@@ -1,11 +1,13 @@
 import { Controller, Post, UseInterceptors, UploadedFile, Param, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { FileUploadService } from './file_upload.service';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { SupabaseGuard } from '../../common/guards/supabase.guard';
 
 @Controller('fu')
-@UseGuards(JwtAuthGuard)
+@ApiTags('File Upload')
+@UseGuards(SupabaseGuard)
 export class FileUploadController {
   constructor(private readonly fileUploadService: FileUploadService) {}
 
